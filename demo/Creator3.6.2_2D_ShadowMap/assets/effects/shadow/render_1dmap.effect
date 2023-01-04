@@ -25,12 +25,12 @@ CCEffect %{
 
 CCProgram shadow-rendervs %{
   precision highp float;
-  #include <cc-global>
+  #include <builtin/uniforms/cc-global>
   #if USE_LOCAL
-    #include <cc-local>
+    #include <builtin/uniforms/cc-local>
   #endif
   #if SAMPLE_FROM_RT
-    #include <common>
+    #include <common/common-define>
   #endif
   in vec3 a_position;
   in vec2 a_texCoord;
@@ -69,8 +69,8 @@ CCProgram shadow-rendervs %{
 
 CCProgram shadow-renderfs %{
   precision highp float;
-  #include <embedded-alpha>
-  #include <alpha-test>
+  #include <builtin/internal/embedded-alpha>
+  #include <builtin/internal/alpha-test>
 
   in vec4 color;
   in float flipY;
@@ -90,7 +90,7 @@ CCProgram shadow-renderfs %{
         float softShadows;
     };
 
-    #define PI 3.14
+    #pragma define PI 3.14
 
     //sample from the 1D distance map
     float shadow_sample(vec2 coord, float r) {

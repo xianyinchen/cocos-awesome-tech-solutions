@@ -1,5 +1,5 @@
 {
-  "__version__": "1.0.1",
+  "__version__": "1.0.2",
   "general": {
     "designResolution": {
       "fitHeight": true,
@@ -15,5 +15,10 @@
       "name": "cast",
       "value": 2
     }
-  ]
+  ],
+  "fbx": {
+    "legacyFbxImporter": {
+      "visible": true
+    }
+  }
 }

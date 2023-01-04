@@ -23,12 +23,12 @@ CCEffect %{
 
 CCProgram shadow-castvs %{
   precision highp float;
-  #include <cc-global>
+  #include <builtin/uniforms/cc-global>
   #if USE_LOCAL
-    #include <cc-local>
+    #include <builtin/uniforms/cc-local>
   #endif
   #if SAMPLE_FROM_RT
-    #include <common>
+    #include <common/common-define>
   #endif
   in vec3 a_position;
   in vec2 a_texCoord;
@@ -67,8 +67,8 @@ CCProgram shadow-castvs %{
 
 CCProgram shadow-castfs %{
   precision highp float;
-  #include <embedded-alpha>
-  #include <alpha-test>
+  #include <builtin/internal/embedded-alpha>
+  #include <builtin/internal/alpha-test>
 
   in vec4 color;
   in float flipY;
@@ -85,10 +85,10 @@ CCProgram shadow-castfs %{
         vec2 resolution;
     };
 
-    #define PI 3.14
+    #pragma define PI 3.14
 
     //alpha threshold for our occlusion map
-    #define THRESHOLD 0.75
+    #pragma define THRESHOLD 0.75
 
     vec4 shadow_cast () {
       float distance = 1.0;
