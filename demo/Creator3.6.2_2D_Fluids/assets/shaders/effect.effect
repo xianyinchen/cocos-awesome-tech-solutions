@@ -26,7 +26,7 @@ CCEffect %{
 
 CCProgram fluid-vs %{
   precision highp float;
-  #include <cc-global>
+  #include <builtin/uniforms/cc-global>
 
   uniform VSARGS {
     vec2 reverseRes;
@@ -56,7 +56,7 @@ CCProgram fluid-vs %{
 
 CCProgram fluid-fs %{
   precision highp float;
-  #include <cc-global>
+  #include <builtin/uniforms/cc-global>
 
   uniform FSARGS {
     float radius;   // X轴方向上的半径，外部通过box2d世界大小和粒子大小计算获得
