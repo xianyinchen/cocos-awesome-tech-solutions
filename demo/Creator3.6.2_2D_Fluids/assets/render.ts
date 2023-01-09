@@ -7,6 +7,16 @@ const { ccclass, property, executeInEditMode } = _decorator;
 // @ts-ignore
 const b2: any = b2 || null!
 
+/*
+  pos = a_position.xy;
+  radius = a_position.z;
+  center = a_texCoord;
+ */
+export const vfmtPosCoord = [
+    new gfx.Attribute(gfx.AttributeName.ATTR_POSITION, gfx.Format.RGB32F),
+    new gfx.Attribute(gfx.AttributeName.ATTR_TEX_COORD, gfx.Format.RG32F)
+];
+
 const vec3_temps: Vec3[] = [];
 for (let i = 0; i < 4; i++) {
     vec3_temps.push(new Vec3());
@@ -14,108 +24,79 @@ for (let i = 0; i < 4; i++) {
 
 class WaterAssembler implements IAssembler {
     createData(com: WaterRender) {
-        let vertexCount = 4;
-        let indexCount = 6;
-
-        const renderData = com.requestRenderData();
-        renderData.dataLength = vertexCount;
-        renderData.resize(vertexCount, indexCount);
-        return renderData;
-    }
-
-    resetData(com: WaterRender) {
-        let particles = com._particles;
-        let particleCount = particles?.GetParticleCount();
-        if (particleCount <= 0) return;
-
-        let vertexCount = particleCount * 4;
-        let indexCount = particleCount * 6;
-
-        com.renderData.clear();
-        com.renderData.dataLength = vertexCount;
-        com.renderData.resize(vertexCount, indexCount);
-
-        let material = com.renderData.material;
-        com.renderData.material = material;
+        return MeshRenderData.add(vfmtPosCoord);
     }
 
     updateRenderData(com: WaterRender) {
-        const renderData = com.renderData;
-        if (renderData.vertDirty) {
-            this.resetData(com);
-            // renderData.updateRenderData(com, null);
-        }
     }
 
     fillBuffers(com: WaterRender, renderer: any) {
         let particles = com._particles;
         let particleCount = particles?.GetParticleCount();
-        if (particleCount <= 0) {
+        if (!particleCount) {
             return;
         }
 
+        let verticesCount = particleCount * 4;
+        let indicesCount = particleCount * 6;
+
         // Request buffer for particles
-        const renderData = com.renderData.chunk;
-        const floatsPerVertex = renderData.meshBuffer.floatsPerVertex;
-        let vertexOffset = renderData.vertexOffset * floatsPerVertex;
-        let indicesOffset = renderData.meshBuffer.indexOffset;
+        const renderData = <MeshRenderData><unknown>com.renderData;
+        renderData.reset();
+
+        let vertexOffset = renderData.vertexCount;
+        let indicesOffset = renderData.indexCount;
+        renderData.request(verticesCount, indicesCount);
 
         let posBuff = particles.GetPositionBuffer();
         let r = particles.GetRadius() * PHYSICS_2D_PTM_RATIO * 3;
 
         // fill vertices
-        const vbuf = renderData.meshBuffer.vData;
+        const vbuf = renderData.vData!;
         for (let i = 0; i < particleCount; ++i) {
             let x = posBuff[i].x * PHYSICS_2D_PTM_RATIO;
             let y = posBuff[i].y * PHYSICS_2D_PTM_RATIO;
 
             // left-bottom
-            vbuf[vertexOffset] = x - r;
-            vbuf[vertexOffset + 1] = y - r;
-            vbuf[vertexOffset + 2] = 0;
-            vbuf[vertexOffset + 3] = x;
-            vbuf[vertexOffset + 4] = y;
-            vertexOffset += floatsPerVertex;
+            vbuf[vertexOffset++] = x - r;
+            vbuf[vertexOffset++] = y - r;
+            vbuf[vertexOffset++] = 0;
+            vbuf[vertexOffset++] = x;
+            vbuf[vertexOffset++] = y;
 
             // right-bottom
-            vbuf[vertexOffset] = x + r;
-            vbuf[vertexOffset + 1] = y - r;
-            vbuf[vertexOffset + 2] = 0;
-            vbuf[vertexOffset + 3] = x;
-            vbuf[vertexOffset + 4] = y;
-            vertexOffset += floatsPerVertex;
+            vbuf[vertexOffset++] = x + r;
+            vbuf[vertexOffset++] = y - r;
+            vbuf[vertexOffset++] = 0;
+            vbuf[vertexOffset++] = x;
+            vbuf[vertexOffset++] = y;
 
             // left-top
-            vbuf[vertexOffset] = x - r;
-            vbuf[vertexOffset + 1] = y + r;
-            vbuf[vertexOffset + 2] = 0;
-            vbuf[vertexOffset + 3] = x;
-            vbuf[vertexOffset + 4] = y;
-            vertexOffset += floatsPerVertex;
+            vbuf[vertexOffset++] = x - r;
+            vbuf[vertexOffset++] = y + r;
+            vbuf[vertexOffset++] = 0;
+            vbuf[vertexOffset++] = x;
+            vbuf[vertexOffset++] = y;
 
             // right-top
-            vbuf[vertexOffset] = x + r;
-            vbuf[vertexOffset + 1] = y + r;
-            vbuf[vertexOffset + 2] = 0;
-            vbuf[vertexOffset + 3] = x;
-            vbuf[vertexOffset + 4] = y;
-            vertexOffset += floatsPerVertex;
+            vbuf[vertexOffset++] = x + r;
+            vbuf[vertexOffset++] = y + r;
+            vbuf[vertexOffset++] = 0;
+            vbuf[vertexOffset++] = x;
+            vbuf[vertexOffset++] = y;
         }
-        vertexOffset = renderData.vertexOffset
 
         // fill indices
-        const ibuf = renderData.meshBuffer.iData;
-        for (let i = 0; i < particleCount; ++i) {
-            ibuf[indicesOffset++] = vertexOffset;
-            ibuf[indicesOffset++] = vertexOffset + 1;
-            ibuf[indicesOffset++] = vertexOffset + 2;
-            ibuf[indicesOffset++] = vertexOffset + 1;
-            ibuf[indicesOffset++] = vertexOffset + 3;
-            ibuf[indicesOffset++] = vertexOffset + 2;
-            vertexOffset += 4;
+        const ibuf = renderData.iData!;
+        for (let i = indicesOffset; i < particleCount; ++i) {
+            const vId = i * 4;
+            ibuf[indicesOffset++] = vId;
+            ibuf[indicesOffset++] = vId + 1;
+            ibuf[indicesOffset++] = vId + 2;
+            ibuf[indicesOffset++] = vId + 1;
+            ibuf[indicesOffset++] = vId + 3;
+            ibuf[indicesOffset++] = vId + 2;
         }
-        renderData.meshBuffer.indexOffset = indicesOffset;
-        renderData.meshBuffer.vertexOffset = vertexOffset;
     }
 };
 
